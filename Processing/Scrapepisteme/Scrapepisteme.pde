@@ -7,7 +7,7 @@ class ControlPanel {
   int x;
   int y;
   ControlP5 cp5;
-  Group g1; 
+  Group gr1; 
   int margin;
   
   public ControlPanel(int w, int h, int _x, int _y) {
@@ -26,7 +26,7 @@ class ControlPanel {
     cp5 = new ControlP5(pa);
     
     //** ControlP5 Groups **//
-    g1= cp5.addGroup("g1")
+    gr1= cp5.addGroup("gr1")
       .setPosition(x, y)
       .setSize(cpWidth, cpHeight)
       .setBackgroundColor(color(255,50))
@@ -54,32 +54,45 @@ class ControlPanel {
      .setFont(createFont("arial",15))
      .setAutoClear(false)
      .setLabel("Search Tag(s)")
-     .setGroup(g1)
+     .setGroup(gr1)
      ;
     elemY += elemH + margin*3;
     
     // Number of Pics
     elemH = 20;
+    cp5.addTextfield("nPics")
+     .setPosition(margin, elemY)
+     .setSize(cpWidth-margin*2, elemH)
+     .setFont(createFont("arial",15))
+     .setAutoClear(false)
+     .setLabel("N-Pics")
+     .setGroup(gr1)
+     ;
+    elemY += elemH + margin*3;
+     
+    /*
+    elemH = 20;
     cp5.addSlider("cp5nPics")
      .setPosition(margin, elemY)
      .setSize(cpWidth-margin*2-margin*3, elemH)
-     .setRange(1, 150)
-     .setNumberOfTickMarks(150) 
-     .setGroup(g1)
-     .setLabel("N-Pics")
-     .setDecimalPrecision(0)
-     .setValue(30)
+     //.setRange(1, 150)
+     //.setNumberOfTickMarks(150) 
+     .setGroup(gr1)
+     //.setLabel("N-Pics")
+     //.setDecimalPrecision(0)
+     //.setValue(30)
      ;
     elemY += elemH + margin*2;
+    */
     
-    /*
+    
     // Sort By
     elemH = 20;
     String[] sortOptions = {"Most Interesting", "Most Relevant", "Most Recent"};
     cp5.addDropdownList("SortBy")
      .setPosition(margin, elemY)
      .setSize(cpWidth-margin*2, elemH*sortOptions.length)
-     .setGroup(g1)
+     .setGroup(gr1)
      .addItems(java.util.Arrays.asList(sortOptions))
      .setValue(0)
      .setLabel(sortOptions[0])
@@ -110,14 +123,14 @@ class ControlPanel {
     cp5.addDropdownList("BlendMode")
      .setPosition(margin, elemY)
      .setSize(cpWidth-margin*2, elemH*blendOptions.length)
-     .setGroup(g1)
+     .setGroup(gr1)
      .addItems(java.util.Arrays.asList(blendOptions))
      .setValue(0)
      .setLabel(blendOptions[0])
      .setOpen(false)
      ;
     elemY += elemH + margin;
-    */
+    
     
     // Auto-Levels
     elemH = 20;
@@ -133,16 +146,16 @@ class ControlPanel {
   }
   
   public void draw() {
-    /*
+    
     // Bring dropdown lists to front when open
     java.util.List allDropDownLists = cp5.getAll(DropdownList.class);
     for (int i=0; i<allDropDownLists.size(); i++) {
       if (((DropdownList) allDropDownLists.get(i)).isOpen()) {
-        //((DropdownList) allDropDownLists.get(i)).bringToFront();
+        ((DropdownList) allDropDownLists.get(i)).bringToFront();
         println(allDropDownLists.get(i));
       }
     }
-    */
+    
   }
 }
 
