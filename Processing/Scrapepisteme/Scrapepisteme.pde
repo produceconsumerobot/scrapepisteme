@@ -68,7 +68,7 @@ class ControlPanel {
   Group gr1; 
   int margin;
   
-  public ControlPanel(int _w, int _h, int _x, int _y) {
+  public ControlPanel(int _x, int _y, int _w, int _h) {
     w = _w;
     h = _h;
     x = _x;
@@ -173,13 +173,13 @@ class ControlPanel {
       "Blend",
       "Add",
       "Subtract",
-      "Darkest",
       "Lightest",
+      "Darkest",
       "Difference",
       "Exclusion",
       "Multiply",
       "Screen",
-      "Replace",
+      //"Replace",
       "Overlay",
       "Hard Light",
       "Soft Light",
@@ -226,6 +226,7 @@ class ControlPanel {
 }
 //******** END ControlPanel ********//
 
+//******** ThumbPanel ********//
 class ThumbPanel {
   int w;
   int h;
@@ -246,9 +247,14 @@ class ThumbPanel {
     nPics = _nPics;
     maxThumbWidth = _maxThumbWidth;
     maxThumbHeight = _maxThumbHeight;
+    setNPics(nPics);
+  }
+  public void setNPics(int _nPics) {
+    nPics = _nPics;
     nCols = w / maxThumbWidth;
     nRows = 1 + (nPics / nCols);  
     h = nRows * maxThumbHeight;
+    println("thumbPanel: " + w + "," + h + "," + maxThumbWidth + "," + maxThumbHeight + "," + (height-tp.h));    
   }
   public void draw(PImage img, int i) {
     int col = i % nCols;
@@ -257,14 +263,71 @@ class ThumbPanel {
     image(img, x + maxThumbWidth*(col+0.5), y + maxThumbHeight*(row+0.5), maxThumbWidth, maxThumbHeight);
   }
 }
+//******** END ThumbPanel ********//
 
 //**** Global Variables ****//
 ControlPanel cp;
 ThumbPanel tp;
 PImage mashupImage;
 ArrayList photos;
+PImage scrapepistemeImage;
+boolean scrapepistemeLoaded;
+int nPics;
 //PGraphics buffert;
 //**** END Global Variables ****//
+
+//******** drawScrapepisteme ********//
+void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
+  int maxW = _maxW;
+  int maxH = _maxH;
+  int x = _x;
+  int y = _y;
+  int h = 0;
+  int w = 0;
+  int centerX = maxW / 2 + x;
+  int centerY = maxH / 2 + y;
+  int blendMode = (int) ((DropdownList) cp.cp5.getController("BlendMode")).getValue() - 1;
+  
+  if (scrapepistemeLoaded == false) {
+    // create the scrapepisteme
+    scrapepistemeImage = createImage(maxW, maxH, ARGB);
+    scrapepistemeLoaded = true;
+    for(int i = photos.size()-1; i>=0; i--){
+        Photo p = (Photo)photos.get(i);
+        int dx;
+        int dy;
+  
+        float imgWHratio = (float) p.img.width / (float) p.img.height;
+        float maxWHratio = (float) maxW / (float) maxH;
+        if (imgWHratio > maxWHratio) {
+          // This IMG has a wider aspect ratio than the output aspect ratio
+          w = maxW;
+          h = (int) ((float) maxW / imgWHratio);
+          dx = 0;
+          dy = (maxH - h) / 2;
+        } else {
+          // This IMG has a taller aspect ratio than the output aspect ratio
+           h = maxH;
+           w = (int) ((float) h * imgWHratio);
+           dx = (maxW - w) / 2;
+           dy = 0;
+        }
+  
+        if (i == photos.size()-1) {
+          scrapepistemeImage.copy(p.img,0,0,p.img.width,p.img.height,dx,dy,maxW-dx*2,maxH-dy*2);
+        } else {
+          println("blendMode=" + pow(2,blendMode)+","+BLEND+","+ADD+","+SUBTRACT+","+LIGHTEST+","+DARKEST+","+DIFFERENCE+","
+              +EXCLUSION+","+MULTIPLY+","+SCREEN+","+OVERLAY+","+HARD_LIGHT+","+SOFT_LIGHT+","+DODGE+","+BURN);
+          scrapepistemeImage.blend(p.img,0,0,p.img.width,p.img.height,dx,dy,maxW-dx*2,maxH-dy*2,(int)pow(2,blendMode));
+        }
+        println("scrape: " + p.img.width + "," + p.img.height + "," + dx + "," + dy + "," + (maxW-dx*2) + "," + (maxH-dy*2));
+        println("image: " + centerX + "," + centerY + "," + maxW + "," + maxH);
+      }
+    }
+    //println("image: " + centerX + "," + centerY + "," + maxW + "," + maxH);
+    image(scrapepistemeImage, centerX, centerY, maxW, maxH);
+}
+//******** END drawScrapepisteme ********//
 
 void setup(){
   int controlPanelWidth = 200;
@@ -272,11 +335,11 @@ void setup(){
   size(1000,800,P3D);
   
   // Setup ControlPanel
-  cp = new ControlPanel(controlPanelWidth, height, 0, 0);
+  cp = new ControlPanel(0, 0, controlPanelWidth, height);
   cp.setup(this);
   
   // Setup the ThumbPanel
-  int nPics = int(((Textfield) cp.cp5.getController("nPics")).getText());
+  nPics = int(((Textfield) cp.cp5.getController("nPics")).getText());
   tp = new ThumbPanel(controlPanelWidth, 0);
   tp.setup(width - controlPanelWidth, nPics, 50, 50); 
   
@@ -317,12 +380,18 @@ void draw(){
       nLoadedPics++;
     } 
   } 
-    //**** END Draw Thumbnails ****//
+  //**** END Draw Thumbnails ****//
+  
+  //**** Draw scrapepistimeImage ****//
+  if (nLoadedPics == nPics) {
+    // We got enough pics!
+    drawScrapepisteme(cp.w, tp.h, width-cp.w, height-tp.h);
+  }
 }
 
 //******** loadImagesFromApiCall ********//
 void loadImagesFromApiCall(String callURL){
-  //mashupLoaded = false;
+  scrapepistemeLoaded = false;
   int goodPhotos = 0;
   photos.clear();
   println(callURL);
@@ -369,6 +438,10 @@ void controlEvent(ControlEvent theEvent) {
     if (controllerName == "Search") {
       search();
     }
+    if (controllerName == "BlendMode") {
+      scrapepistemeLoaded = false;
+      //println(theEvent.getController().getStringValue() + ':' + theEvent.getController().getValue());
+    }
     
     //println(theEvent.getController().getValue());
     //println(theEvent.getController().getArrayValue());
@@ -383,18 +456,20 @@ void controlEvent(ControlEvent theEvent) {
 void search() {
   String tags = ((Textfield) cp.cp5.getController("SearchTags")).getText();
   tags = tags.trim().replace(' ', '+');
-  int nPics = int(((Textfield) cp.cp5.getController("nPics")).getText());
+  nPics = int(((Textfield) cp.cp5.getController("nPics")).getText());
   String sortBy = ((DropdownList) cp.cp5.getController("SortBy")).getStringValue();
   if(tags.length()>0 && nPics > 0){
-    loadImagesFromApiCall("https://api.flickr.com/services/rest/?method=flickr.photos.search"
+    tp.setNPics(nPics); 
+    String apiCall = "https://api.flickr.com/services/rest/?method=flickr.photos.search"
           +"&api_key=ce44a738b6af08a5969aeadeeefdc7f4"
           +"&tags="+tags
           +"&per_page="+nPics
           +"&sort="+sortBy
           +"&media=photos"
           //+"license=0"
-          );
+          ;
+    println(apiCall);
+    loadImagesFromApiCall(apiCall);
   }
-  
 }
 //******** END Search ********//
