@@ -79,7 +79,7 @@ class ControlPanel {
   }
   
   public void setup(PApplet pa) {
-    int elemH;
+    int elemH = 20;
     int elemY = margin;
     
     // ControlP5 Setup
@@ -95,10 +95,11 @@ class ControlPanel {
     //** ControlP5 Elements **//
     // Search Button
     elemH = 20;
-    cp5.addButton("Search")
+    cp5.addButton("CP5_Search")
      .setValue(0)
      .setPosition(margin, elemY)
      .setSize(w-margin*2, elemH)
+     .setGroup(gr1)
      .setLabel("Search")
      .setColorBackground(color(0,160,0))
      .setColorForeground(color(0,120,0))
@@ -139,7 +140,7 @@ class ControlPanel {
      .setSize(w-margin*2, elemH)
      .setFont(createFont("arial",15))
      .setAutoClear(false)
-     .setValue("70299351@N00")
+     .setValue("me")
      .setLabel("User-ID")
      .setGroup(gr1)
      ;
@@ -183,6 +184,7 @@ class ControlPanel {
     elemY += elemH + margin;
     
     // Blend Mode
+    elemY += margin*4;
     elemH = 20;
     String[] blendOptions = {
       "Average",
@@ -251,13 +253,28 @@ class ControlPanel {
      ;
     elemY += elemH + margin*3;
 
-
-    // Save Button
+    // Redraw Button
     elemH = 20;
-    cp5.addButton("SaveScrapepisteme")
-     .setValue(0)
+    cp5.addButton("ReprocessScrapepisteme")
+     .setValue(1)
      .setPosition(margin, elemY)
      .setSize(w-margin*2, elemH)
+     .setGroup(gr1)
+     .setLabel("Re-Process")
+     //.setColorBackground(color(0,160,0))
+     //.setColorForeground(color(0,120,0))
+     .setColorActive(color(10,10,160))
+     ;
+    elemY += elemH + margin;
+
+    // Save Button
+    elemY += margin*6;
+    elemH = 20;
+    cp5.addButton("SaveScrapepisteme")
+     .setValue(1)
+     .setPosition(margin, elemY)
+     .setSize(w-margin*2, elemH)
+     .setGroup(gr1)
      .setLabel("Save Scrapepisteme")
      .setColorBackground(color(0,160,0))
      .setColorForeground(color(0,120,0))
@@ -331,6 +348,7 @@ int nPics;
 XML photoList;
 String searchString;
 String apiKey;
+boolean setupComplete;
 //PGraphics buffert;
 //**** END Global Variables ****//
 
@@ -435,6 +453,9 @@ void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
       //println("autoLevels: " + boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0])));
       //if (false) {
       if (boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0]))) {
+      //||
+      //int(((Textfield) cp.cp5.getController("Brightness")).getText()) != 0 ||
+      //int(((Textfield) cp.cp5.getController("Contrast")).getText()) != 0) {
         float[] maxes = {0, 0, 0};
         float[] mins = {1000, 1000, 1000};
         scrapepistemeImage.loadPixels(); 
@@ -460,20 +481,18 @@ void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
         }
         //println("CenterIMG: " + leftCut +','+ rightCut +','+ topCut +','+ bottomCut);
         
-        // Narrow the maxes/mins for more contrast
-        float histCut = 0.1; // Edges of histogram to clip
-        for (int j=0; j<3; j++) {
-          float cut = (maxes[j] - mins[j]) * histCut;
-          maxes[j] = constrain(maxes[j]-cut, max(mins[j], 0), 255);
-          mins[j] = constrain(mins[j]+cut, 0, min(maxes[j], 255));
-        }
-               
+                 
         // User defined contrast adjustment
+        float histCut = 0.1; // Edges of histogram to clip
         int contrast = int(((Textfield) cp.cp5.getController("Contrast")).getText());
         int brightness = int(((Textfield) cp.cp5.getController("Brightness")).getText());
         for (int j=0; j<3; j++) {
-          maxes[j] = constrain(maxes[j] - contrast - brightness, max(mins[j], 0), 255);
-          mins[j] = constrain(mins[j] + contrast - brightness, 0, min(maxes[j], 255));
+          float cut = 0;
+          if (boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0]))) {
+            cut = (maxes[j] - mins[j]) * histCut; // Calculate the Auto-Levels
+          }
+          maxes[j] = constrain(maxes[j] - contrast - brightness - cut, max(mins[j], 0), 255);
+          mins[j] = constrain(mins[j] + contrast - brightness + cut, 0, min(maxes[j], 255));
         }
         
         // Auto-Contrast (max/min over all colors)
@@ -499,6 +518,7 @@ void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
 //******** END drawScrapepisteme ********//
 
 void setup(){
+  setupComplete = false;
   int controlPanelWidth = 200;
   
   size(1000,800,P3D);
@@ -520,8 +540,10 @@ void setup(){
     apiKey = "";
   }
   
+  setupComplete = true;
+  
   photos = new ArrayList();
-  search();
+  doSearch();
  imageMode(CENTER);
 
    println(cp.cp5.getAll());
@@ -591,7 +613,7 @@ void loadImagesFromApiCall(String callURL){
       //photos.add(new Photo("http://farm"+farm+".static.flickr.com/"+server+"/"+id+"_"+secret+".jpg",i%perRow,yPos,i+1));
       photos.add(new Photo("http://farm"+farm+".static.flickr.com/"+server+"/"+id+"_"+secret+".jpg",i%perRow,yPos,i+1));
       goodPhotos++;
-      println("photoCall:" + i%perRow + ',' + yPos + ',' + i+1 + ',' + goodPhotos);
+      //println("photoCall:" + i%perRow + ',' + yPos + ',' + i+1 + ',' + goodPhotos);
     } 
   }
   println("goodPhotos=" + goodPhotos);
@@ -615,6 +637,7 @@ String getDateTimeString() {
 
 //******** Event Controller ********//
 void controlEvent(ControlEvent theEvent) {
+  if (setupComplete) {
   if(theEvent.isGroup()) {
     println("got an event from group "
             +theEvent.getGroup().getName()
@@ -631,8 +654,8 @@ void controlEvent(ControlEvent theEvent) {
             +theEvent.getController().getName()
             );
     String controllerName = theEvent.getController().getName();
-    if (controllerName == "Search") {
-      search();
+    if (controllerName == "CP5_Search") {
+      doSearch();
     }
     if (controllerName == "BlendMode") {
       scrapepistemeLoaded = false;
@@ -657,6 +680,9 @@ void controlEvent(ControlEvent theEvent) {
       outList.toArray(outArray);
       saveStrings(filebase + ".txt", outArray);
     }
+    if (controllerName == "ReprocessScrapepisteme") {
+      scrapepistemeLoaded = false;
+    }
     
     
     //println(theEvent.getController().getValue());
@@ -664,6 +690,7 @@ void controlEvent(ControlEvent theEvent) {
     //println(theEvent.getController().getValueLabel());
     //println(theEvent.getController().getStringValue());
     //println(theEvent.getController().getCaptionLabel());
+  }
   }
 }
 //******** END Event Controller ********//
@@ -686,8 +713,8 @@ String getSearchString() {
   return myString;
 }
 
-//******** Search ********//
-void search() {
+//******** doSearch ********//
+void doSearch() {
   String tags = ((Textfield) cp.cp5.getController("SearchTags")).getText();
   nPics = int(((Textfield) cp.cp5.getController("nPics")).getText());
   if(tags.length()>0 && nPics > 0){
