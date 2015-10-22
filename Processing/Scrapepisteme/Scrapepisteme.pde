@@ -132,7 +132,7 @@ class ControlPanel {
      ;
     elemY += elemH + margin*3;
     
-    // Number of Pics
+    // Search UserID
     elemH = 20;
     cp5.addTextfield("UserId")
      .setPosition(margin, elemY)
@@ -224,6 +224,33 @@ class ControlPanel {
       .activate(0)
     ;
     elemY += elemH + margin;
+    
+    // Search UserID
+    elemH = 20;
+    cp5.addTextfield("Contrast")
+     .setPosition(margin, elemY)
+     .setSize(w-margin*2, elemH)
+     .setFont(createFont("arial",15))
+     .setAutoClear(false)
+     .setValue("0")
+     .setLabel("Contrast")
+     .setGroup(gr1)
+     ;
+    elemY += elemH + margin*3;
+    
+        // Search UserID
+    elemH = 20;
+    cp5.addTextfield("Brightness")
+     .setPosition(margin, elemY)
+     .setSize(w-margin*2, elemH)
+     .setFont(createFont("arial",15))
+     .setAutoClear(false)
+     .setValue("0")
+     .setLabel("Brightness")
+     .setGroup(gr1)
+     ;
+    elemY += elemH + margin*3;
+
 
     // Save Button
     elemH = 20;
@@ -437,8 +464,16 @@ void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
         float histCut = 0.1; // Edges of histogram to clip
         for (int j=0; j<3; j++) {
           float cut = (maxes[j] - mins[j]) * histCut;
-          maxes[j] = maxes[j]-cut;
-          mins[j] = mins[j]+cut;
+          maxes[j] = constrain(maxes[j]-cut, max(mins[j], 0), 255);
+          mins[j] = constrain(mins[j]+cut, 0, min(maxes[j], 255));
+        }
+               
+        // User defined contrast adjustment
+        int contrast = int(((Textfield) cp.cp5.getController("Contrast")).getText());
+        int brightness = int(((Textfield) cp.cp5.getController("Brightness")).getText());
+        for (int j=0; j<3; j++) {
+          maxes[j] = constrain(maxes[j] - contrast - brightness, max(mins[j], 0), 255);
+          mins[j] = constrain(mins[j] + contrast - brightness, 0, min(maxes[j], 255));
         }
         
         // Auto-Contrast (max/min over all colors)
@@ -563,6 +598,21 @@ void loadImagesFromApiCall(String callURL){
 }
 //******** END loadImagesFromApiCall ********//
 
+String getDateTimeString() {
+  String datetime = ""+year();
+  if (month() < 10) {datetime += "0";}
+  datetime += month();
+  if (day() < 10) {datetime += "0";}
+  datetime += day();
+  if (hour() < 10) {datetime += "0";}
+  datetime += hour();
+  if (minute() < 10) {datetime += "0";}
+  datetime += minute();
+  if (second() < 10) {datetime += "0";}
+  datetime += second();
+  return datetime;
+}
+
 //******** Event Controller ********//
 void controlEvent(ControlEvent theEvent) {
   if(theEvent.isGroup()) {
@@ -589,7 +639,7 @@ void controlEvent(ControlEvent theEvent) {
       //println(theEvent.getController().getStringValue() + ':' + theEvent.getController().getValue());
     }
     if (controllerName == "SaveScrapepisteme") {
-      String datetime = ""+year()+month()+day()+hour()+minute()+second();
+      String datetime = getDateTimeString();
       String dir = "Scrapepistemes/";
       String filebase = dir + datetime + '_' + ((Textfield) cp.cp5.getController("SearchTags")).getText();
       
