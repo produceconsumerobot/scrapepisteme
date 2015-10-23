@@ -189,29 +189,22 @@ class ControlPanel {
     elemH = 20;
     String[] blendOptions = {
       "Average",
-      "Blend",
-      "Add",
-      "Subtract",
-      "Lightest",
-      "Darkest",
       "Difference",
-      "Exclusion",
-      "Multiply",
-      "Screen",
-      //"Replace",
-      "Overlay",
       "Hard Light",
-      "Soft Light",
-      "Dodge",
-      "Burn"
+      "Lightest",
+      "Darkest"
     };
     cp5.addDropdownList("BlendMode")
      .setPosition(margin, elemY)
      .setSize(w-margin*2, elemH*blendOptions.length)
      .setGroup(gr1)
-     .addItems(java.util.Arrays.asList(blendOptions))
+     .addItem("Average", 0)
+     .addItem("Difference", 6)
+     .addItem("Hard Light", 12)
+     .addItem("Lightest", 4)
+     .addItem("Darkest", 5)
      .setValue(0)
-     .setLabel(blendOptions[0])
+     //.setLabel(blendOptions[0])
      .setOpen(false)
      ;
     elemY += elemH + margin;
@@ -227,21 +220,8 @@ class ControlPanel {
       .activate(0)
     ;
     elemY += elemH + margin;
-    
-    // Search UserID
-    elemH = 20;
-    cp5.addTextfield("Contrast")
-     .setPosition(margin, elemY)
-     .setSize(w-margin*2, elemH)
-     .setFont(createFont("arial",15))
-     .setAutoClear(false)
-     .setValue("0")
-     .setLabel("Contrast")
-     .setGroup(gr1)
-     ;
-    elemY += elemH + margin*3;
-    
-        // Search UserID
+
+    // Brightness
     elemH = 20;
     cp5.addTextfield("Brightness")
      .setPosition(margin, elemY)
@@ -250,6 +230,19 @@ class ControlPanel {
      .setAutoClear(false)
      .setValue("0")
      .setLabel("Brightness")
+     .setGroup(gr1)
+     ;
+    elemY += elemH + margin*3;
+    
+    // Contrast
+    elemH = 20;
+    cp5.addTextfield("Contrast")
+     .setPosition(margin, elemY)
+     .setSize(w-margin*2, elemH)
+     .setFont(createFont("arial",15))
+     .setAutoClear(false)
+     .setValue("0")
+     .setLabel("Contrast")
      .setGroup(gr1)
      ;
     elemY += elemH + margin*3;
@@ -363,7 +356,14 @@ void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
   int w = 0;
   int centerX = maxW / 2 + x;
   int centerY = maxH / 2 + y;
-  int blendMode = (int) ((DropdownList) cp.cp5.getController("BlendMode")).getValue() - 1;
+  int blendMode = (int) ((DropdownList) cp.cp5.getController("BlendMode")).getValue();
+  if (blendMode == 0) {blendMode = -1;}
+  else if (blendMode == 1) {blendMode = 5;}
+  else if (blendMode == 2) {blendMode = 11;}
+  else if (blendMode == 3) {blendMode = 3;}
+  else if (blendMode == 4) {blendMode = 4;}
+  String blendName = ((DropdownList) cp.cp5.getController("BlendMode")).getName();
+  println("blendmode: " + blendMode +','+ blendName);
   
   if (scrapepistemeLoaded == false) {
     // create the scrapepisteme
@@ -542,7 +542,7 @@ void setup(){
   setupComplete = false;
   int controlPanelWidth = 200;
   
-  size(1000,800,P3D);
+  size(1500,820,P3D);
   
   // Setup ControlPanel
   cp = new ControlPanel(0, 0, controlPanelWidth, height);
