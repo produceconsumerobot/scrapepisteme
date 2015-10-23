@@ -162,6 +162,7 @@ class ControlPanel {
     */
     
     
+    /*
     // Sort By
     elemH = 20;
     String[] sortOptions = {
@@ -183,6 +184,7 @@ class ControlPanel {
      .setOpen(false)
      ;
     elemY += elemH + margin;
+    */
     
     // Blend Mode
     elemY += margin*4;
@@ -720,13 +722,13 @@ String getSearchString() {
   String tags = ((Textfield) cp.cp5.getController("SearchTags")).getText();
   tags = tags.trim().replace(' ', '+');
   nPics = int(((Textfield) cp.cp5.getController("nPics")).getText());
-  String sortBy = ((DropdownList) cp.cp5.getController("SortBy")).getStringValue();
+  //String sortBy = ((DropdownList) cp.cp5.getController("SortBy")).getStringValue();
   
   String myString = "https://api.flickr.com/services/rest/?method=flickr.photos.search"
       +"&api_key="+apiKey
       +"&tags="+tags
       +"&per_page="+nPics
-      +"&sort="+sortBy
+      //+"&sort="+sortBy
       +"&media=photos"
       +"&user_id="+((Textfield) cp.cp5.getController("UserId")).getText();
       //+"license=0"
