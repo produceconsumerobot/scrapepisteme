@@ -140,7 +140,7 @@ class ControlPanel {
      .setSize(w-margin*2, elemH)
      .setFont(createFont("arial",15))
      .setAutoClear(false)
-     .setValue("me")
+     .setValue("")
      .setLabel("User-ID")
      .setGroup(gr1)
      ;
@@ -453,10 +453,9 @@ void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
       }
       //println("autoLevels: " + boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0])));
       //if (false) {
-      if (boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0]))) {
-      //||
-      //int(((Textfield) cp.cp5.getController("Brightness")).getText()) != 0 ||
-      //int(((Textfield) cp.cp5.getController("Contrast")).getText()) != 0) {
+      if (boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0])) ||
+      int(((Textfield) cp.cp5.getController("Brightness")).getText()) != 0 ||
+      int(((Textfield) cp.cp5.getController("Contrast")).getText()) != 0) {
         float[] maxes = {0, 0, 0};
         float[] mins = {1000, 1000, 1000};
         scrapepistemeImage.loadPixels(); 
@@ -482,25 +481,46 @@ void drawScrapepisteme( int _x, int _y, int _maxW, int _maxH) {
         }
         //println("CenterIMG: " + leftCut +','+ rightCut +','+ topCut +','+ bottomCut);
         
-                 
-        // User defined contrast adjustment
-        float histCut = 0.1; // Edges of histogram to clip
-        int contrast = int(((Textfield) cp.cp5.getController("Contrast")).getText());
-        int brightness = int(((Textfield) cp.cp5.getController("Brightness")).getText());
-        for (int j=0; j<3; j++) {
-          float cut = 0;
-          if (boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0]))) {
-            cut = (maxes[j] - mins[j]) * histCut; // Calculate the Auto-Levels
+        // Auto-Contrast
+        if (boolean(int(cp.cp5.getGroup("AutoLevels").getArrayValue()[0]))) {
+          float histCut = 0.1; // Edges of histogram to clip
+          for (int j=0; j<3; j++) {
+            float cut = (maxes[j] - mins[j]) * histCut; // Calculate the Auto-Levels
+            maxes[j] = maxes[j] - cut;
+            mins[j] = mins[j] + cut;
+          }   
+          for (int j=0; j<3; j++) {
+            mins[j] = min(min(mins[0], mins[1]), mins[2]);
+            maxes[j] = max(max(maxes[0], maxes[1]), maxes[2]);
           }
-          maxes[j] = constrain(maxes[j] - contrast - brightness - cut, max(mins[j], 0), 255);
-          mins[j] = constrain(mins[j] + contrast - brightness + cut, 0, min(maxes[j], 255));
         }
         
-        // Auto-Contrast (max/min over all colors)
-        for (int j=0; j<3; j++) {
-          mins[j] = min(min(mins[0], mins[1]), mins[2]);
-          maxes[j] = max(max(maxes[0], maxes[1]), maxes[2]);
+        // User Brightness
+        if (int(((Textfield) cp.cp5.getController("Brightness")).getText()) != 0) {
+          int brightness = int(((Textfield) cp.cp5.getController("Brightness")).getText());
+          for (int j=0; j<3; j++) {
+            maxes[j] = maxes[j] - brightness;
+            mins[j] = mins[j] - brightness;
+          }   
         }
+        
+        // User Contrast
+        if (int(((Textfield) cp.cp5.getController("Contrast")).getText()) != 0) {
+          int contrast = int(((Textfield) cp.cp5.getController("Contrast")).getText());
+          for (int j=0; j<3; j++) {
+            maxes[j] = maxes[j] - contrast;
+            mins[j] = mins[j] + contrast;
+          }   
+        }
+            
+        // Contrain the values
+        // TODO: This could be optimized
+        for (int j=0; j<3; j++) {
+          maxes[j] = constrain(maxes[j], max(mins[j], 0), 255);
+          mins[j] = constrain(mins[j], 0, min(maxes[j], 255));
+        }
+
+        // Map the values to the new max/min values
         //println("MaxMins:" + maxes[0] +','+ maxes[1] +','+ maxes[2] +','+ mins[0] +','+ mins[1] +','+ mins[2]);
         for (int j = 0; j < scrapepistemeImage.pixels.length; j++) {
           scrapepistemeImage.pixels[j] = color(
