@@ -165,13 +165,14 @@ class ControlPanel {
     // Sort By
     elemH = 20;
     String[] sortOptions = {
+      "relevance",
       "interestingness-desc", 
-      "interestingness-ASc", 
+      "interestingness-asc", 
       "date-posted-desc",
       "date-posted-asc",
       "date-taken-asc",
-      "date-taken-desc",
-      "relevance"};
+      "date-taken-desc"
+      };
     cp5.addDropdownList("SortBy")
      .setPosition(margin, elemY)
      .setSize(w-margin*2, elemH*sortOptions.length)
